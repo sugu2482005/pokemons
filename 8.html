@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokéDex Pro // Ultimate 4-Column 3D FX Matrix SPA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-blur: blur(20px);
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #04060a;
+            background-image: radial-gradient(at 50% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* --- SINGLE PAGE APPLICATION VIEWS --- */
+        .view-panel {
+            display: none;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        .view-panel.active-view {
+            display: flex;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 4%;
+            background: rgba(4, 6, 10, 0.8);
+            border-bottom: 1px solid var(--glass-border);
+            backdrop-filter: var(--glass-blur);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.2rem; }
+        .pokeball-logo {
+            width: 24px; height: 24px; border: 2px solid var(--text-primary); border-radius: 50%; position: relative;
+        }
+        .pokeball-logo::before {
+            content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: var(--text-primary); transform: translateY(-50%);
+        }
+        .pokeball-logo::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: #04060a; border: 2px solid var(--text-primary); border-radius: 50%; transform: translate(-50%, -50%);
+        }
+
+        .back-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        /* --- DASHBOARD STRUCTURE --- */
+        .hero { padding: 4rem 4% 2rem; text-align: center; max-width: 800px; margin: 0 auto; }
+        .hero h1 {
+            font-size: 2.75rem; font-weight: 700; letter-spacing: -1.5px; margin-bottom: 0.5rem;
+            background: linear-gradient(180deg, #FFFFFF 0%, #818CF8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p { color: var(--text-secondary); font-size: 1rem; }
+
+        .main-content { padding: 0 4% 8rem; max-width: 1440px; margin: 0 auto; perspective: 1600px; }
+        
+        /* UPDATED: Structured grid layout to specifically target 4 items per row on large screens */
+        .grid-layout { 
+            display: grid; 
+            grid-template-columns: repeat(1, 1fr); 
+            gap: 2.5rem; 
+            transform-style: preserve-3d; 
+        }
+        @media (min-width: 580px) { .grid-layout { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 992px) { .grid-layout { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1200px) { .grid-layout { grid-template-columns: repeat(4, 1fr); } }
+
+        .card-wrapper { perspective: 1000px; position: relative; }
+
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: var(--glass-blur);
+            border-radius: 24px;
+            padding: 1.75rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transform: rotateX(12deg) rotateY(-8deg) translateZ(0px);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .card-wrapper:hover .glass-card {
+            transform: rotateX(16deg) rotateY(-4deg) translateZ(15px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-card.active-3d {
+            transform: rotateX(18deg) rotateY(0deg) translateZ(50px) translateY(-10px) !important;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .elemental-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1;
+            mix-blend-mode: screen;
+            transition: opacity 0.3s ease;
+        }
+        .glass-card.active-3d .elemental-canvas { opacity: 1; }
+
+        .glass-card.active-3d.glow-electric { border-color: #fde047; box-shadow: 0 0 30px rgba(253, 224, 71, 0.2); }
+        .glass-card.active-3d.glow-fire { border-color: #f87171; box-shadow: 0 0 30px rgba(248, 113, 113, 0.2); }
+        .glass-card.active-3d.glow-ice { border-color: #67e8f9; box-shadow: 0 0 30px rgba(103, 232, 249, 0.2); }
+        .glass-card.active-3d.glow-psychic { border-color: #c084fc; box-shadow: 0 0 30px rgba(192, 132, 252, 0.2); }
+        .glass-card.active-3d.glow-dragon { border-color: #818CF8; box-shadow: 0 0 30px rgba(129, 140, 248, 0.2); }
+
+        .poke-img-container {
+            position: relative; height: 110px; display: flex; justify-content: flex-end; align-items: center;
+            transform: translateZ(40px); z-index: 2;
+        }
+        .poke-img { width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4)); }
+
+        .execute-strike { animation: physicalImpact 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        @keyframes physicalImpact {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.3) translateY(-12px) rotate(-5deg); filter: brightness(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .skill-badge {
+            position: absolute; top: 15px; left: 1.75rem;
+            padding: 0.25rem 0.6rem; border-radius: 6px;
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            opacity: 0; transform: translateY(5px) translateZ(30px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 10;
+        }
+        .glass-card.active-3d .skill-badge { opacity: 1; transform: translateY(0) translateZ(30px); }
+
+        .badge-electric { background: #fde047; color: #000; }
+        .badge-fire { background: #f87171; color: #fff; }
+        .badge-ice { background: #67e8f9; color: #000; }
+        .badge-psychic { background: #c084fc; color: #fff; }
+        .badge-dragon { background: #818CF8; color: #fff; }
+
+        .card-details { transform: translateZ(25px); margin-top: 0.5rem; position: relative; z-index: 2; }
+        .poke-id { font-size: 0.7rem; font-family: monospace; color: var(--text-muted); }
+        .poke-name { font-size: 1.3rem; font-weight: 700; margin: 0.1rem 0 0.5rem; }
+        .type-tag { font-size: 0.6rem; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700; text-transform: uppercase; display: inline-block; background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+
+        /* --- 3D PROFILE PAGE DETAILS VIEW --- */
+        .profile-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 4%;
+            perspective: 2000px;
+        }
+
+        .profile-mesh-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: var(--glass-blur);
+            border-radius: 32px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+            transform-style: preserve-3d;
+            transform: rotateX(10deg) rotateY(-5deg);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .visual-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        .stage-glow {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(129, 140, 248, 0.2) 0%, transparent 70%);
+            z-index: 1;
+            filter: blur(20px);
+        }
+        .main-3d-img {
+            width: 100%;
+            max-width: 280px;
+            z-index: 2;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.7));
+            transform: translateZ(80px);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .telemetry-data {
+            transform: translateZ(40px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .char-id { font-family: monospace; color: var(--text-muted); font-size: 1rem; margin-bottom: 0.5rem;}
+        .char-name { font-size: 3rem; font-weight: 700; margin-bottom: 1rem; letter-spacing: -1px; }
+        
+        .attribute-row { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+        .badge {
+            padding: 0.35rem 0.8rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .stats-panel {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.04);
+            transform: translateZ(20px);
+        }
+        .stat-group { margin-bottom: 1rem; }
+        .stat-group:last-child { margin-bottom: 0; }
+        .stat-labels { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.25rem; color: var(--text-secondary); }
+        .bar-track { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+        .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #818CF8, #c084fc); transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        @keyframes float {
+            0%, 100% { transform: translateZ(80px) translateY(0px); }
+            50% { transform: translateZ(100px) translateY(-15px); }
+        }
+
+        @media (max-width: 768px) {
+            .profile-mesh-card { grid-template-columns: 1fr; padding: 2rem; gap: 2rem; transform: none !important; }
+            .main-3d-img { max-width: 180px; transform: none !important; animation: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="matrix-dashboard-view" class="view-panel active-view">
+        <header>
+            <div class="logo-area"><div class="pokeball-logo"></div><span>PokéDex // 4-Column Legendary FX Matrix</span></div>
+            <div style="font-size: 0.75rem; font-family: monospace; color: #818CF8;">CORES ACTIVE // ARCHIVE VERIFIED</div>
+        </header>
+
+        <section class="hero">
+            <h1>Legendary Elemental Matrix</h1>
+            <p>Single Click to cast dynamic canvas visual strikes. <strong>Double Click</strong> on a character's card frame to initialize the isolated 3D profile setup.</p>
+        </section>
+
+        <main class="main-content">
+            <div class="grid-layout" id="fx-matrix-grid"></div>
+        </main>
+    </div>
+
+
+    <div id="character-profile-view" class="view-panel">
+        <header>
+            <button class="back-btn" onclick="returnToDashboard()">← Back to Grid</button>
+            <div style="font-size: 0.75rem; font-family: monospace; color: #818CF8;">BIO-LINK // CONNECTED</div>
+        </header>
+
+        <main class="profile-container">
+            <div class="profile-mesh-card">
+                
+                <div class="visual-stage">
+                    <div class="stage-glow" id="glow-color"></div>
+                    <img src="" alt="" class="main-3d-img" id="poke-image">
+                </div>
+
+                <div class="telemetry-data">
+                    <span class="char-id" id="poke-id"></span>
+                    <h1 class="char-name" id="poke-name">---</h1>
+                    
+                    <div class="attribute-row">
+                        <span class="badge" id="poke-type">---</span>
+                        <span class="badge" id="poke-skill" style="border: 1px solid rgba(129, 140, 248, 0.4); color: #818CF8;">---</span>
+                    </div>
+
+                    <div class="stats-panel">
+                        <div class="stat-group">
+                            <div class="stat-labels"><span>COMBAT GENERATION POWER</span><span id="val-cp">0%</span></div>
+                            <div class="bar-track"><div class="bar-fill" id="bar-cp"></div></div>
+                        </div>
+                        <div class="stat-group">
+                            <div class="stat-labels"><span>ELEMENTAL MATRIX RESONANCE</span><span id="val-em">0%</span></div>
+                            <div class="bar-track"><div class="bar-fill" id="bar-em"></div></div>
+                        </div>
+                        <div class="stat-group">
+                            <div class="stat-labels"><span>KINETIC AGILITY THRESHOLD</span><span id="val-av">0%</span></div>
+                            <div class="bar-track"><div class="bar-fill" id="bar-av"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+
+    <script>
+        // Expanded Database housing 40 Legendary and Mythical Characters
+        const characters = [
+            { id: 144, name: "Articuno", type: "ice", class: "glow-ice", badge: "badge-ice", skill: "Blizzard" },
+            { id: 145, name: "Zapdos", type: "electric", class: "glow-electric", badge: "badge-electric", skill: "Thunderbolt" },
+            { id: 146, name: "Moltres", type: "fire", class: "glow-fire", badge: "badge-fire", skill: "Sky Attack" },
+            { id: 150, name: "Mewtwo", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Psystrike" },
+            { id: 243, name: "Raikou", type: "electric", class: "glow-electric", badge: "badge-electric", skill: "Thunder" },
+            { id: 244, name: "Entei", type: "fire", class: "glow-fire", badge: "badge-fire", skill: "Sacred Fire" },
+            { id: 245, name: "Suicune", type: "ice", class: "glow-ice", badge: "badge-ice", skill: "Hydro Pump" },
+            { id: 249, name: "Lugia", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Aeroblast" },
+            { id: 250, name: "Ho-Oh", type: "fire", class: "glow-fire", badge: "badge-fire", skill: "Sacred Fire" },
+            { id: 377, name: "Regirock", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Stone Edge" },
+            { id: 378, name: "Regice", type: "ice", class: "glow-ice", badge: "badge-ice", skill: "Ice Beam" },
+            { id: 379, name: "Registeel", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Flash Cannon" },
+            { id: 380, name: "Latias", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Mist Ball" },
+            { id: 381, name: "Latios", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Luster Purge" },
+            { id: 382, name: "Kyogre", type: "ice", class: "glow-ice", badge: "badge-ice", skill: "Origin Pulse" },
+            { id: 383, name: "Groudon", type: "fire", class: "glow-fire", badge: "badge-fire", skill: "Precipice Blades" },
+            { id: 384, name: "Rayquaza", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Dragon Ascent" },
+            { id: 385, name: "Jirachi", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Doom Desire" },
+            { id: 386, name: "Deoxys", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Psycho Boost" },
+            { id: 480, name: "Uxie", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Future Sight" },
+            { id: 481, name: "Mesprit", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Extrasensory" },
+            { id: 482, name: "Azelf", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Last Resort" },
+            { id: 483, name: "Dialga", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Roar of Time" },
+            { id: 484, name: "Palkia", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Spacial Rend" },
+            { id: 485, name: "Heatran", type: "fire", class: "glow-fire", badge: "badge-fire", skill: "Magma Storm" },
+            { id: 486, name: "Regigigas", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Giga Impact" },
+            { id: 487, name: "Giratina", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Shadow Force" },
+            { id: 488, name: "Cresselia", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Lunar Dance" },
+            { id: 491, name: "Darkrai", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Dark Void" },
+            { id: 493, name: "Arceus", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Judgment" },
+            { id: 494, name: "Victini", type: "fire", class: "glow-fire", badge: "badge-fire", skill: "V-create" },
+            { id: 641, name: "Tornadus", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Bleakwind Storm" },
+            { id: 642, name: "Thundurus", type: "electric", class: "glow-electric", badge: "badge-electric", skill: "Wildbolt Storm" },
+            { id: 643, name: "Reshiram", type: "fire", class: "glow-fire", badge: "badge-fire", skill: "Blue Flare" },
+            { id: 644, name: "Zekrom", type: "electric", class: "glow-electric", badge: "badge-electric", skill: "Bolt Strike" },
+            { id: 645, name: "Landorus", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Sandsear Storm" },
+            { id: 646, name: "Kyurem", type: "ice", class: "glow-ice", badge: "badge-ice", skill: "Glaciate" },
+            { id: 716, name: "Xerneas", type: "psychic", class: "glow-psychic", badge: "badge-psychic", skill: "Geomancy" },
+            { id: 717, name: "Yveltal", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Oblivion Wing" },
+            { id: 718, name: "Zygarde", type: "dragon", class: "glow-dragon", badge: "badge-dragon", skill: "Core Enforcer" }
+        ];
+
+        const grid = document.getElementById('fx-matrix-grid');
+        let activeCanvasRunners = {}; 
+
+        // Initialization Logic for populating matrix configuration cells
+        characters.forEach((poke, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card-wrapper';
+            const uniqueCanvasId = `canvas-${poke.id}-${index}`;
+            
+            wrapper.innerHTML = `
+                <div class="glass-card ${poke.class}" 
+                     onclick="triggerElementalAttack(this, '${poke.type}', '${uniqueCanvasId}')"
+                     ondblclick="switchToProfileView(${poke.id}, '${escape(poke.name)}', '${poke.type}', '${escape(poke.skill)}')">
+                    <canvas id="${uniqueCanvasId}" class="elemental-canvas"></canvas>
+                    <div class="skill-badge ${poke.badge}">${poke.skill}</div>
+                    <div class="poke-img-container">
+                        <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${poke.id}.png" alt="${poke.name}" class="poke-img">
+                    </div>
+                    <div class="card-details">
+                        <span class="poke-id">#${String(poke.id).padStart(4, '0')}</span>
+                        <h3 class="poke-name">${poke.name}</h3>
+                        <span class="type-tag">${poke.type}</span>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(wrapper);
+        });
+
+        // Click Handler: Triggers animations and canvas effects
+        function triggerElementalAttack(cardElement, type, canvasId) {
+            const img = cardElement.querySelector('.poke-img');
+            const canvas = document.getElementById(canvasId);
+            const isActive = cardElement.classList.contains('active-3d');
+
+            document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active-3d'));
+            Object.keys(activeCanvasRunners).forEach(id => cancelAnimationFrame(activeCanvasRunners[id]));
+
+            if (!isActive) {
+                cardElement.classList.add('active-3d');
+                img.classList.add('execute-strike');
+                setTimeout(() => img.classList.remove('execute-strike'), 400);
+                startFxEngine(canvas, type, canvasId);
+            }
+        }
+
+        // Double Click Handler: Transitions layout panels and updates profile fields
+        function switchToProfileView(id, unescapedName, type, unescapedSkill) {
+            const name = unescape(unescapedName);
+            const skill = unescape(unescapedSkill);
+
+            Object.keys(activeCanvasRunners).forEach(id => cancelAnimationFrame(activeCanvasRunners[id]));
+
+            document.getElementById('matrix-dashboard-view').classList.remove('active-view');
+            document.getElementById('character-profile-view').classList.add('active-view');
+
+            document.getElementById('poke-id').innerText = `#${String(id).padStart(4, '0')}`;
+            document.getElementById('poke-name').innerText = name;
+            document.getElementById('poke-type').innerText = type;
+            document.getElementById('poke-skill').innerText = `SKILL: ${skill}`;
+            document.getElementById('poke-image').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+
+            const colors = {
+                electric: 'rgba(253, 224, 71, 0.35)',
+                fire: 'rgba(248, 113, 113, 0.35)',
+                ice: 'rgba(103, 232, 249, 0.35)',
+                psychic: 'rgba(192, 132, 252, 0.35)',
+                dragon: 'rgba(129, 140, 248, 0.35)'
+            };
+            document.getElementById('glow-color').style.background = `radial-gradient(circle, ${colors[type] || 'rgba(255,255,255,0.2)'} 0%, transparent 70%)`;
+
+            document.getElementById('bar-cp').style.width = '0%';
+            document.getElementById('bar-em').style.width = '0%';
+            document.getElementById('bar-av').style.width = '0%';
+
+            setTimeout(() => {
+                const cpVal = Math.floor(Math.random() * 20) + 80; // Legendary profiles scale higher
+                const emVal = Math.floor(Math.random() * 15) + 85;
+                const avVal = Math.floor(Math.random() * 25) + 75;
+
+                document.getElementById('val-cp').innerText = `${cpVal}%`;
+                document.getElementById('bar-cp').style.width = `${cpVal}%`;
+
+                document.getElementById('val-em').innerText = `${emVal}%`;
+                document.getElementById('bar-em').style.width = `${emVal}%`;
+
+                document.getElementById('val-av').innerText = `${avVal}%`;
+                document.getElementById('bar-av').style.width = `${avVal}%`;
+            }, 250);
+        }
+
+        function returnToDashboard() {
+            document.getElementById('character-profile-view').classList.remove('active-view');
+            document.getElementById('matrix-dashboard-view').classList.add('active-view');
+            document.querySelectorAll('.glass-card').forEach(c => c.classList.remove('active-3d'));
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
+        // Parallax System for Profile Display Panel
+        const profileCard = document.querySelector('.profile-mesh-card');
+        document.addEventListener('mousemove', (e) => {
+            if (!document.getElementById('character-profile-view').classList.contains('active-view')) return;
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+            profileCard.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        // Elemental Canvas Visual Rendering Engine Loops
+        function startFxEngine(canvas, type, canvasId) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            let particles = [];
+            let frameCounter = 0;
+
+            function renderLoop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                frameCounter++;
+
+                if (type === 'electric') {
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeStyle = '#fde047';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = '#eab308';
+                    
+                    if (frameCounter % 6 === 0) {
+                        ctx.beginPath();
+                        let tx = Math.random() * canvas.width;
+                        ctx.moveTo(tx, 0);
+                        for(let segment = 0; segment < 6; segment++) {
+                            tx += (Math.random() - 0.5) * 40;
+                            let ty = (canvas.height / 6) * segment;
+                            ctx.lineTo(tx, ty);
+                        }
+                        ctx.stroke();
+                    }
+                } 
+                else if (type === 'fire') {
+                    if (particles.length < 40) {
+                        particles.push({
+                            x: Math.random() * canvas.width,
+                            y: canvas.height + 10,
+                            speedY: Math.random() * 3 + 1,
+                            radius: Math.random() * 4 + 2,
+                            alpha: 1
+                        });
+                    }
+                    particles.forEach((p, idx) => {
+                        p.y -= p.speedY;
+                        p.alpha -= 0.015;
+                        ctx.fillStyle = `rgba(248, 113, 113, ${p.alpha})`;
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = '#ef4444';
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        if (p.alpha <= 0) particles.splice(idx, 1);
+                    });
+                } 
+                else if (type === 'ice') {
+                    if (particles.length < 30) {
+                        particles.push({
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            vx: (Math.random() - 0.5) * 4,
+                            vy: Math.random() * 2 + 2,
+                            size: Math.random() * 3 + 1
+                        });
+                    }
+                    ctx.fillStyle = '#67e8f9';
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = '#06b6d4';
+                    particles.forEach((p, idx) => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        ctx.fillRect(p.x, p.y, p.size, p.size);
+                        if (p.y > canvas.height) particles.splice(idx, 1);
+                    });
+                } 
+                else {
+                    ctx.strokeStyle = '#c084fc';
+                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#a855f7';
+                    let radius = (frameCounter * 4) % (canvas.width / 1.2);
+                    ctx.beginPath();
+                    ctx.arc(canvas.width / 2, canvas.height / 2, radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                activeCanvasRunners[canvasId] = requestAnimationFrame(renderLoop);
+            }
+
+            renderLoop();
+        }
+    </script>
+</body>
+</html>
